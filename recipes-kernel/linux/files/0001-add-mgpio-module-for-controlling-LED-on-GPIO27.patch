@@ -1,0 +1,100 @@
+From 8706fe7600a47f3bb799f9ae5a02cfe440251b8e Mon Sep 17 00:00:00 2001
+From: OpenEmbedded <oe.patch@oe>
+Date: Mon, 4 May 2026 16:08:36 +0700
+Subject: [PATCH] add mgpio module for controlling  LED on GPIO27
+
+---
+ drivers/Makefile       |  1 +
+ drivers/mgpio/Makefile |  2 ++
+ drivers/mgpio/mgpio.c  | 40 ++++++++++++++++++++++++++++++++++++++++
+ drivers/mgpio/mgpio.h  | 13 +++++++++++++
+ 4 files changed, 56 insertions(+)
+ create mode 100644 drivers/mgpio/Makefile
+ create mode 100644 drivers/mgpio/mgpio.c
+ create mode 100644 drivers/mgpio/mgpio.h
+
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 1bec7819a837..8e29ddc061e2 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -199,3 +199,4 @@ obj-$(CONFIG_DRM_ACCEL)		+= accel/
+ obj-$(CONFIG_CDX_BUS)		+= cdx/
+ 
+ obj-$(CONFIG_S390)		+= s390/
++obj-m				+= mgpio/
+diff --git a/drivers/mgpio/Makefile b/drivers/mgpio/Makefile
+new file mode 100644
+index 000000000000..93045f8177a7
+--- /dev/null
++++ b/drivers/mgpio/Makefile
+@@ -0,0 +1,2 @@
++EXTRA_CFLAGS = -Wall
++obj-m = mgpio.o
+diff --git a/drivers/mgpio/mgpio.c b/drivers/mgpio/mgpio.c
+new file mode 100644
+index 000000000000..4c3d6da8d585
+--- /dev/null
++++ b/drivers/mgpio/mgpio.c
+@@ -0,0 +1,40 @@
++#include <linux/module.h>   /* Defines functions such as module_init/module_exit */
++#include <linux/gpio.h>     /* Defines functions such as gpio_request/gpio_free */     
++
++#define GPIO_NUMBER_27      27
++
++#define LOW                 0
++#define HIGH                1
++
++#define DRIVER_AUTHOR "hung"
++#define DRIVER_DESC   "gpio subsystem"
++
++/* Constructor */
++static int __init gpio_init(void)
++{
++    gpio_request(GPIO_NUMBER_27, "gpio_27");
++    gpio_direction_output(GPIO_NUMBER_27, LOW);
++
++    gpio_set_value(GPIO_NUMBER_27, HIGH);
++
++    pr_info("GPIO27 set to HIGH, GPIO27 status: %d!\n", gpio_get_value(GPIO_NUMBER_27));
++    return 0;
++}
++
++/* Destructor */
++static void __exit gpio_exit(void)
++{
++    gpio_set_value(GPIO_NUMBER_27, LOW);
++
++    gpio_free(GPIO_NUMBER_27);
++    
++    pr_info("GPIO27 set to LOW, GPIO27 status: %d!\n", gpio_get_value(GPIO_NUMBER_27));
++}
++
++module_init(gpio_init);
++module_exit(gpio_exit);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR(DRIVER_AUTHOR);
++MODULE_DESCRIPTION(DRIVER_DESC); 
++MODULE_VERSION("1.0"); 
+diff --git a/drivers/mgpio/mgpio.h b/drivers/mgpio/mgpio.h
+new file mode 100644
+index 000000000000..fabd53de1183
+--- /dev/null
++++ b/drivers/mgpio/mgpio.h
+@@ -0,0 +1,13 @@
++#ifndef RASPBERRY_PI_ZERO_2W_GPIO_H
++#define RASPBERRY_PI_ZERO_2W_GPIO_H
++
++#define BCM2835_PERIPHERAL_ADDR 0xFE200000
++#define BCM2835_GPIO_BASE_ADDR  0x200000
++#define GPIO_FSEL_OFFSET        0x00
++#define GPIO_SET_0_OFFSET       0x1C
++#define GPIO_CLR_0_OFFSET       0x28
++
++#define GPIO_NUMBER_27          27
++
++
++#endif // RASPBERRY_PI_ZERO_2W_GPIO_H
+-- 
+2.43.0
+
