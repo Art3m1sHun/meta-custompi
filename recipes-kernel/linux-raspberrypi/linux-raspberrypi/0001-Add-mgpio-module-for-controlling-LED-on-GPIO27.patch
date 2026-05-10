@@ -1,0 +1,108 @@
+From f4f2dde2037ecefa93b3646ac22c7c9a7083c4ad Mon Sep 17 00:00:00 2001
+From: OpenEmbedded <oe.patch@oe>
+Date: Sun, 10 May 2026 14:48:37 +0700
+Subject: [PATCH] Add mgpio module for controlling LED on GPIO27
+
+---
+ drivers/Kconfig        |  2 ++
+ drivers/Makefile       |  2 ++
+ drivers/mgpio/Makefile |  2 ++
+ drivers/mgpio/mgpio.c  | 53 ++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 59 insertions(+)
+ create mode 100644 drivers/mgpio/Makefile
+ create mode 100644 drivers/mgpio/mgpio.c
+
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index efb66e25fa2d..a9cca00924e0 100644
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -243,4 +243,6 @@ source "drivers/hte/Kconfig"
+ 
+ source "drivers/cdx/Kconfig"
+ 
++source "drivers/ssd1306/Kconfig"
++
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 1bec7819a837..f1110ca2cd0b 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -199,3 +199,5 @@ obj-$(CONFIG_DRM_ACCEL)		+= accel/
+ obj-$(CONFIG_CDX_BUS)		+= cdx/
+ 
+ obj-$(CONFIG_S390)		+= s390/
++obj-m	+= mgpio/
++obj-$(CONFIG_SSD1306) += ssd1306/
+\ No newline at end of file
+diff --git a/drivers/mgpio/Makefile b/drivers/mgpio/Makefile
+new file mode 100644
+index 000000000000..7a2da39a2910
+--- /dev/null
++++ b/drivers/mgpio/Makefile
+@@ -0,0 +1,2 @@
++EXTRA_CFLAGS = -Wall
++obj-m = mgpio.o
+\ No newline at end of file
+diff --git a/drivers/mgpio/mgpio.c b/drivers/mgpio/mgpio.c
+new file mode 100644
+index 000000000000..c026abbb4016
+--- /dev/null
++++ b/drivers/mgpio/mgpio.c
+@@ -0,0 +1,53 @@
++#include <linux/module.h>   /* Defines functions such as module_init/module_exit */
++#include <linux/gpio.h>     /* Defines functions such as gpio_request/gpio_free */   
++#include <linux/of.h>
++#include <linux/gpio/consumer.h>
++#include <linux/platform_device.h>
++
++#define LOW                 0
++#define HIGH                1
++
++#define DRIVER_AUTHOR "minhhungdenguyn052@gmail.com"
++#define DRIVER_DESC   "gpio subsystem"
++
++struct gpio_desc *gpio_27;
++
++static  const struct of_device_id gpiod_dt_ids[] = {
++    { .compatible = "gpio-descriptor-based", },
++    {}
++};
++
++static int mgpio_driver_probe(struct platform_device *pdev)
++{
++    struct device *dev = &pdev->dev;
++    gpio_27 = gpiod_get(dev, "led27", GPIOD_OUT_LOW);
++    gpiod_set_value (gpio_27, HIGH);
++
++    pr_info ("%s - %d\n", __func__, __LINE__);
++    return 0;
++}
++
++static int mgpio_driver_remove(struct platform_device *pdev){
++    gpiod_set_value(gpio_27, LOW);
++    gpiod_put(gpio_27);
++    
++    pr_info ("%s - %d\n", __func__, __LINE__);
++    return 0;
++}
++
++static struct platform_driver mgpio = {
++    .probe = mgpio_driver_probe,
++    .remove = mgpio_driver_remove,
++    .driver = {
++        .name = "gpio-descriptor-based",
++        .of_match_table = of_match_ptr(gpiod_dt_ids),
++        .owner = THIS_MODULE,
++    },
++};
++
++module_platform_driver(mgpio);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR(DRIVER_AUTHOR);
++MODULE_DESCRIPTION(DRIVER_DESC); 
++MODULE_VERSION("1.0"); 
+\ No newline at end of file
+-- 
+2.43.0
+
