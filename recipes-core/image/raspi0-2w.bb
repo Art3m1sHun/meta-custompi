@@ -19,5 +19,13 @@ IMAGE_INSTALL:append = " \
  wpa-supplicant \
  wireless-regdb-static \
 "
+
 IMAGE_INSTALL += "kernel-module-libcomposite"
 IMAGE_INSTALL:append = "connman connman-client"
+
+LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
+LICENSE_FLAGS_ACCEPTED += "commercial"
+
+IMAGE_INSTALL:append = " i2c-tools"
+
+
